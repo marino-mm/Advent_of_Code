@@ -10,7 +10,9 @@ fn invalid_number(numb: &u64) -> bool {
         if str_len % pattern_len != 0 {
             continue;
         }
-        if numb_str.replace(&replace_pattern, "").len() == 0 {
+        //if numb_str.replace(&replace_pattern, "").len() == 0 {
+        let match_str = replace_pattern.repeat(str_len / pattern_len);
+        if match_str == numb_str{
             return true;
         }
     }

@@ -6,23 +6,17 @@ fn invalid_number(numb: &u64) -> bool{
     let numb_str = numb.to_string();
     let str_len = numb_str.len();
 
-    let mut old_pattern ="";
-
-    if numb_str == "12"{
-    
-    }
-
     for pattern_len in 1..str_len{
         let replace_pattern = &numb_str[0..pattern_len];
-        if old_pattern == replace_pattern{
+        if str_len % pattern_len != 0 {
             continue;
         }
-        old_pattern = replace_pattern;
-        if numb_str.replace(&replace_pattern, "").len() == 0{
+        //if numb_str.replace(&replace_pattern, "").len() == 0{
+        let match_str = replace_pattern.repeat(str_len / pattern_len);
+        if match_str == numb_str{
             return true;
         }
-    }
-    
+    }    
     false
 }
 
