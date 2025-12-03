@@ -1,4 +1,4 @@
-use std::{fs::read_to_string, process::Output, thread, time::Instant};
+use std::{fs::read_to_string, thread, time::Instant};
 
 
 fn invalid_number(numb: &u64) -> bool{
