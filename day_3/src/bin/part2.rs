@@ -1,4 +1,4 @@
-use std::{time::Instant, u64::MIN};
+use std::time::Instant;
 
 
 fn find_biggest_number(list: &str) -> (u64, u64){
