@@ -1,4 +1,3 @@
-use std::process::exit;
 use std::time::Instant;
 
 fn main() {
@@ -22,7 +21,7 @@ fn solve(data: &[u8]) -> u64 {
         }else { break; }
     }
 
-    let line_count = data.len() / (line_size + 2);
+    // let line_count = data.len() / (line_size + 2);
 
     let mut curr_line_buffer: Vec<u64> = vec![0; line_size];
     let mut new_line_buffer: Vec<u64> = vec![0; line_size];

@@ -21,7 +21,7 @@ fn solve(data: &[u8]) -> u16 {
         }else { break; }
     }
 
-    let line_count = data.len() / (line_size + 2);
+    // let line_count = data.len() / (line_size + 2);
 
     let mut curr_line_buffer: Vec<u8> = vec![0; line_size];
     let mut new_line_buffer: Vec<u8> = vec![0; line_size];
