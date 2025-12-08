@@ -94,26 +94,11 @@ fn solve(data: &str) -> u128 {
     res
 }
 
-#[derive(PartialEq, Eq, PartialOrd, Debug, Hash, Clone, Copy)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Debug, Hash, Clone, Copy)]
 struct JunctBox {
     x: u128,
     y: u128,
     z: u128,
-}
-
-impl Ord for JunctBox {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        let s_val = self.x + self.y + self.z;
-        let o_val = other.x + other.y + other.z;
-
-        if s_val > o_val {
-            std::cmp::Ordering::Greater
-        } else if s_val < o_val {
-            std::cmp::Ordering::Less
-        } else {
-            std::cmp::Ordering::Equal
-        }
-    }
 }
 
 fn get_dist(jnt_1: &JunctBox, jnt_2: &JunctBox) -> f64 {
