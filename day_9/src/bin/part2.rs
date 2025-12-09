@@ -25,14 +25,11 @@ fn solve(data: &str) -> u64 {
             .collect();
         let curr_point = (*parts.get(0).unwrap(), *parts.get(1).unwrap());
         points.push(curr_point);
-
-        for &point in &points{
-            if point != curr_point{
-                let dist = (point.0.abs_diff(curr_point.0) + 1) * (point.1.abs_diff(curr_point.1) + 1);
-                tile_count_max = tile_count_max.max(dist);
-            }
-        }
     }
+
+    let points_count = points.len();
+
+    
 
     tile_count_max
 }
