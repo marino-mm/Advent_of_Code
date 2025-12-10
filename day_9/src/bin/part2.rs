@@ -2,8 +2,8 @@ use std::{time::Instant, u64};
 
 fn main() {
     let start = Instant::now();
-    let data = include_str!("input.txt");
-    // let data = include_str!("test.txt");
+    // let data = include_str!("input.txt");
+    let data = include_str!("test.txt");
 
     let res = solve(&data);
     let duration = start.elapsed();
