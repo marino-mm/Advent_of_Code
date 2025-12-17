@@ -1,14 +1,10 @@
-use std::{
-    collections::{HashSet, VecDeque},
-    time::Instant,
-};
-use std::collections::HashMap;
-use std::process::exit;
+use std::{mem::{swap, take}, time::Instant};
 
 fn main() {
     let start = Instant::now();
     // let data = include_str!("input.txt");
-    let data = include_str!("test.txt");
+    // let data = include_str!("test.txt");
+    let data = "[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}";
 
     let res = solve(&data);
     let duration = start.elapsed();
@@ -17,75 +13,32 @@ fn main() {
 }
 
 fn solve(data: &str) -> u64 {
-    let mut res = 0;
+    let res = 0;
 
     for line in data.lines() {
         let parts: Vec<&str> = line.split(" ").collect();
 
         // let target_lights = proccess_target_ligths(parts[0]);
         let buttons: Vec<Vec<u64>> = process_buttons(parts[1..parts.len() - 1].to_vec());
-
         let target_jolts = process_jolts(parts.last().unwrap());
-
-        let target_jolt_len = target_jolts.len();
-        let mut problem = Problem {
+        let problem = Problem {
             target_jolts: target_jolts,
-            curr_jolts: vec![0; target_jolt_len],
             button: buttons,
         };
-        /*
-        let solved_count = solve_problem(problem);
-        println!("{}", solved_count);
-        res += solved_count;
-         */
 
-        for (i, &temp) in vec![1, 3, 0, 3, 1, 2].iter().enumerate(){
-            for _ in 0..temp {
-                problem.button_press(i);
-            }
-            println!("{:?}", problem.curr_jolts);
-        }
-        exit(1)
+        solve_problem(&problem)
     }
 
     res
 }
 
-
-fn solve_problem(problem: Problem) -> u64 {
-    let button_count = problem.button.len();
-
-    let mut problems = VecDeque::<(Problem, u64)>::new();
-    let mut past_jolts: HashSet<Vec<u64>> = HashSet::new();
-    problems.push_front((problem.clone(), 0));
-
-    past_jolts.insert(problem.curr_jolts.clone());
-    loop {
-        let (problem, depth) = match problems.pop_front() {
-            Some(state) => state,
-            None => { println!("Stack is empty!!!!");return 0},
-        };
-        for i in (0..button_count).rev() {
-            let mut new_problem = problem.clone();
-            new_problem.button_press(i);
-            if new_problem.is_solved() {
-                return depth + 1;
-            }
-            if new_problem.is_valid(){
-                if !past_jolts.contains(&new_problem.curr_jolts){
-                    past_jolts.insert(new_problem.curr_jolts.clone());
-                    // println!("{:?}", problem);
-                    println!("{:?}", problem.curr_jolts);
-                    problems.push_front((new_problem, depth + 1));
-                }
-            }
-        }
-    }
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct Problem {
+    target_jolts: Vec<u64>,
+    button: Vec<Vec<u64>>,
 }
 
-
 fn process_jolts(values: &str) -> Vec<u64> {
-
     let mut values = values.replace("{", "");
     values = values.replace("}", "");
 
@@ -113,60 +66,90 @@ fn process_buttons(values: Vec<&str>) -> Vec<Vec<u64>> {
     buttons
 }
 
-#[allow(dead_code)]
-fn proccess_target_ligths(lights: &str) -> Vec<u64> {
-    let mut target_lights = Vec::<u64>::new();
-    for c in lights.chars() {
-        if c != '[' && c != ']' {
-            if c == '.' {
-                target_lights.push(0);
+fn solve_problem(problem: &Problem) {
+    let mut matrix = Vec::<Vec<i64>>::new();
+
+    for (c_i, constant) in problem.target_jolts.iter().enumerate() {
+        let mut row = Vec::new();
+        for button in &problem.button {
+            if button.contains(&(c_i as u64)) {
+                row.push(1i64);
             } else {
-                target_lights.push(1);
+                row.push(0i64);
+            }
+        }
+        row.push(*constant as i64);
+        matrix.push(row);
+    }
+
+    let row_count = matrix.len();
+    let col_count = matrix[0].len();
+
+    pretty_print_matrix(&matrix);
+    print!("\n");
+    // Order rows
+    for col_i in 0..col_count -1{
+        for row_i in col_i..row_count{
+            if matrix[row_i][col_i] == 1 && row_i != col_i{
+                println!("Swap row {} and row {}", row_i, col_i);
+                matrix.swap(row_i, col_i);
             }
         }
     }
-    target_lights
-}
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct Problem {
-    target_jolts: Vec<u64>,
-    curr_jolts: Vec<u64>,
-    button: Vec<Vec<u64>>,
-}
-impl Problem {
-    fn button_press(&mut self, button_index: usize) {
-        let rule = self.button.get(button_index as usize).unwrap();
-        for &command in rule {
-            let new_value = self.curr_jolts[command as usize] + 1;
-            self.curr_jolts[command as usize] = new_value;
-        }
-    }
-    fn is_solved(&self) -> bool {
-        self.target_jolts == self.curr_jolts
-    }
-    fn is_valid(&self) -> bool {
-        for i in 0..self.curr_jolts.len(){
-            let curr_jolt = self.curr_jolts.get(i).unwrap();
-            let target_jolt = self.target_jolts.get(i).unwrap();
-            if curr_jolt > target_jolt{
-                return false;
-            }
-        }
-        true
-    }
+    pretty_print_matrix(&matrix);
+    // Eliminate
 
-    fn display_dict(&self) {
-        let mut number_occasion: HashMap<u64, u64> = HashMap::new();
-
-        for button in &self.button {
-            for number in button {
-                match number_occasion.get(number) {
-                    None => {number_occasion.insert(*number, 1);},
-                    Some(n) => {number_occasion.insert(*number, n + 1);}
+    for row_i in (1 .. row_count).rev(){
+        for col_i in (0 .. col_count -1).rev(){
+            let pivot = matrix[row_i][col_i];
+            let pivot_above = matrix[row_i - 1][col_i];
+            //Subtract rows
+            if pivot == 1 && pivot_above == 1 {
+                for elm_col in (0 .. col_count).rev(){
+                    matrix[row_i - 1][elm_col] -=  matrix[row_i][elm_col]
                 }
             }
         }
-
     }
+    println!("After elimination");
+    pretty_print_matrix(&matrix);
+
+    let var_MIN = 0;
+    let mut var_MAX = 0;
+
+    let mut free_var = Vec::<u64>::new();
+
+    for row in &matrix{
+        var_MAX = var_MAX.max(*row.last().unwrap())
+    }
+
+    let mut pivot_numb = 0;
+    for col_i in 0..col_count -1{
+        pivot_numb = 0;
+        for row_i in 0 .. row_count{
+            if matrix[row_i][col_i] == 1{
+                pivot_numb += 1
+            }
+        }
+        if pivot_numb > 1{
+            free_var.push(col_i as u64);
+        }
+    }
+
+
+    println!("Min: {}, Max: {}", var_MIN, var_MAX);
+    println!("Free var: {:?}", free_var);
+
+}
+
+
+fn pretty_print_matrix(matrix: &Vec<Vec<i64>>) {
+    for row in matrix {
+        for value in row {
+            print!("{} ", value);
+        }
+        print!("\n");
+    }
+    print!("\n");
 }
