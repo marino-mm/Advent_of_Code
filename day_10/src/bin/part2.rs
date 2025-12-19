@@ -1,10 +1,13 @@
-use std::{mem::{swap, take}, time::Instant};
+use std::{collections::HashSet, time::Instant};
 
 fn main() {
     let start = Instant::now();
     // let data = include_str!("input.txt");
     // let data = include_str!("test.txt");
-    let data = "[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}";
+    // let data = "[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}";
+    // let data = "[.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}";
+    // let data = "[##.#..##.] (0,2,3,5,7,8) (1,2,8) (2,6,8) (0,2,4,6,7,8) (0,1,8) (0,4,5,8) (1,3) (0,1,3,4,8) (0,2,5,8) (5) (0,1,2,3,5,7) {77,51,54,27,31,69,6,17,94}";
+    let data = "[#.#.] (0,2) (1,3) {4,1,4,1}";
 
     let res = solve(&data);
     let duration = start.elapsed();
@@ -12,8 +15,8 @@ fn main() {
     println!("Result: {:?}", res);
 }
 
-fn solve(data: &str) -> u64 {
-    let res = 0;
+fn solve(data: &str) -> i32 {
+    let mut res = 0;
 
     for line in data.lines() {
         let parts: Vec<&str> = line.split(" ").collect();
@@ -67,84 +70,63 @@ fn process_buttons(values: Vec<&str>) -> Vec<Vec<u64>> {
 }
 
 fn solve_problem(problem: &Problem) {
-    let mut matrix = Vec::<Vec<i64>>::new();
+    let mut matrix = Vec::<Vec<f64>>::new();
 
+    let mut row_set: HashSet<Vec<i64>> = HashSet::new();
     for (c_i, constant) in problem.target_jolts.iter().enumerate() {
-        let mut row = Vec::new();
+        let mut row: Vec<i64> = Vec::new();
         for button in &problem.button {
             if button.contains(&(c_i as u64)) {
-                row.push(1i64);
+                row.push(1);
             } else {
-                row.push(0i64);
+                row.push(0);
             }
         }
         row.push(*constant as i64);
-        matrix.push(row);
-    }
-
-    let row_count = matrix.len();
-    let col_count = matrix[0].len();
-
-    pretty_print_matrix(&matrix);
-    print!("\n");
-    // Order rows
-    for col_i in 0..col_count -1{
-        for row_i in col_i..row_count{
-            if matrix[row_i][col_i] == 1 && row_i != col_i{
-                println!("Swap row {} and row {}", row_i, col_i);
-                matrix.swap(row_i, col_i);
-            }
+        if !row_set.contains(&row) {
+            matrix.push(row.iter().map(|&x| x as f64).collect());
+            row_set.insert(row);
         }
     }
 
-    pretty_print_matrix(&matrix);
-    // Eliminate
+    let rows = matrix.len();
+    let cols = matrix[0].len();
+    let mut lead = 0;pretty_print_matrix(&matrix);
 
-    for row_i in (1 .. row_count).rev(){
-        for col_i in (0 .. col_count -1).rev(){
-            let pivot = matrix[row_i][col_i];
-            let pivot_above = matrix[row_i - 1][col_i];
-            //Subtract rows
-            if pivot == 1 && pivot_above == 1 {
-                for elm_col in (0 .. col_count).rev(){
-                    matrix[row_i - 1][elm_col] -=  matrix[row_i][elm_col]
+    for r in 0..rows {
+        if lead >= cols {
+            break;
+        }
+        let mut i = r;
+        while matrix[i][lead].abs() < 1e-9 {
+            i += 1;
+            if i == rows {
+                i = r;
+                lead += 1;
+                if lead == cols {
+                    return matrix;
                 }
             }
         }
-    }
-    println!("After elimination");
-    pretty_print_matrix(&matrix);
-
-    let var_MIN = 0;
-    let mut var_MAX = 0;
-
-    let mut free_var = Vec::<u64>::new();
-
-    for row in &matrix{
-        var_MAX = var_MAX.max(*row.last().unwrap())
-    }
-
-    let mut pivot_numb = 0;
-    for col_i in 0..col_count -1{
-        pivot_numb = 0;
-        for row_i in 0 .. row_count{
-            if matrix[row_i][col_i] == 1{
-                pivot_numb += 1
+        matrix.swap(i, r);
+        let div = matrix[r][lead];
+        for j in 0..cols {
+            matrix[r][j] /= div;
+        }
+        for i in 0..rows {
+            if i != r {
+                let matrixult = matrix[i][lead];
+                for j in 0..cols {
+                    matrix[i][j] -= matrixult * matrix[r][j];
+                }
             }
         }
-        if pivot_numb > 1{
-            free_var.push(col_i as u64);
-        }
+        lead += 1;
     }
-
-
-    println!("Min: {}, Max: {}", var_MIN, var_MAX);
-    println!("Free var: {:?}", free_var);
-
+    pretty_print_matrix(&matrix);
 }
 
-
-fn pretty_print_matrix(matrix: &Vec<Vec<i64>>) {
+fn pretty_print_matrix(matrix: &Vec<Vec<f64>>) {
     for row in matrix {
         for value in row {
             print!("{} ", value);
